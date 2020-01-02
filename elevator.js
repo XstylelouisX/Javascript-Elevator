@@ -8,7 +8,8 @@ var elevatorStatus = ["停留中", "已到達", "下樓中", "上樓中"];
 //建構的電梯
 var elevatorGroup = [];
 
-function elevator(id, elevatorSpeed, floorIndex, enterFloor, recordFloor, isRunUp, isOpen, direction, status, enterUpFloor, enterDownFloor) {
+function elevator(id, elevatorSpeed, floorIndex, enterFloor, recordFloor, isRunUp, isOpen, direction, status,
+    maxValue, minValue, enterUpFloor, enterDownFloor) {
     //電梯編號
     this.id = id;
     //電梯速度
@@ -27,6 +28,10 @@ function elevator(id, elevatorSpeed, floorIndex, enterFloor, recordFloor, isRunU
     this.direction = direction;
     //電梯狀態
     this.status = status;
+    //最大值
+    this.maxValue = maxValue;
+    //最小值
+    this.minValue = minValue;
     //輸入樓層
     this.enterUpFloor = enterUpFloor;
     this.enterDownFloor = enterDownFloor;
@@ -35,14 +40,14 @@ function elevator(id, elevatorSpeed, floorIndex, enterFloor, recordFloor, isRunU
 //初始化載入
 window.onload = function () {
     //電梯一
-    var elevator_1 = new elevator(1, 500, 4, 0, 0, null, null, null, null, [], []);
+    var elevator_1 = new elevator(1, 500, 4, 0, 0, null, null, null, null, null, null, [], []);
     //初始更新
     initialization(elevator_1);
     //持續更新
     Updata(elevator_1);
 
     //電梯二
-    var elevator_2 = new elevator(2, 500, 4, 0, 0, null, null, null, null, [], []);
+    var elevator_2 = new elevator(2, 500, 4, 0, 0, null, null, null, null, null, null, [], []);
     //初始更新
     initialization(elevator_2);
     //持續更新
@@ -100,22 +105,26 @@ function floorButtonOnClick(num, isUp, elevatorGroup) {
             if (Priority(isUp, elevatorGroup) == true) { //外部面板按鈕
                 //顯示輸入紀錄用
                 elevatorGroup[0].recordFloor = i;
-                if (isUp) { //如果上樓
+                if (isUp && floorUp.style.backgroundColor != "yellow") { //如果上樓
                     elevatorGroup[0].enterUpFloor.push(floorNum[i]); //紀錄輸入流程
                     floorUp.style.backgroundColor = "yellow";
                 } else { //如果下樓
-                    elevatorGroup[0].enterDownFloor.push(floorNum[i]); //紀錄輸入流程
-                    floorDown.style.background = "yellow";
+                    if (floorDown.style.background != "yellow") {
+                        elevatorGroup[0].enterDownFloor.push(floorNum[i]); //紀錄輸入流程
+                        floorDown.style.background = "yellow";
+                    }
                 }
             } else {
                 //顯示輸入紀錄用
                 elevatorGroup[1].recordFloor = i;
-                if (isUp) { //如果上樓
+                if (isUp && floorUp.style.backgroundColor != "yellow") { //如果上樓
                     elevatorGroup[1].enterUpFloor.push(floorNum[i]); //紀錄輸入流程
                     floorUp.style.backgroundColor = "yellow";
                 } else { //如果下樓
-                    elevatorGroup[1].enterDownFloor.push(floorNum[i]); //紀錄輸入流程
-                    floorDown.style.background = "yellow";
+                    if (floorDown.style.background != "yellow") {
+                        elevatorGroup[1].enterDownFloor.push(floorNum[i]); //紀錄輸入流程
+                        floorDown.style.background = "yellow";
+                    }
                 }
             }
         }
@@ -128,12 +137,14 @@ function floorPanelOnClick(num, floorPanel, elevator) {
         var floorDown = document.getElementById("Down_" + floor[i]);
         if (num == floor[i]) {
             //數入樓層 與 當前樓層判斷
-            if (i - 1 > floorNum[elevator.floorIndex]) {
-                elevator.enterUpFloor.push(floorNum[i]); //紀錄輸入流程
-                floorPanel.style.background = "yellow";
-            } else if (i - 1 < floorNum[elevator.floorIndex]) {
-                elevator.enterDownFloor.push(floorNum[i]); //紀錄輸入流程
-                floorPanel.style.background = "yellow";
+            if (floorPanel.style.background != "yellow") {
+                if (i - 1 > floorNum[elevator.floorIndex]) {
+                    elevator.enterUpFloor.push(floorNum[i]); //紀錄輸入流程
+                    floorPanel.style.background = "yellow";
+                } else if (i - 1 < floorNum[elevator.floorIndex]) {
+                    elevator.enterDownFloor.push(floorNum[i]); //紀錄輸入流程
+                    floorPanel.style.background = "yellow";
+                }
             }
         }
     }
@@ -212,6 +223,9 @@ function ElevatorRun(elevator, status) {
             elevator.floorIndex++;
             status.textContent = elevatorStatus[3] + (floor[elevator.enterUpFloor[0] + 1]).toString();
             elevator.status = elevatorStatus[3];
+            if (elevator.enterUpFloor[0] == elevator.enterUpFloor[1]) {
+                elevator.enterDownFloor.push(elevator.enterUpFloor.shift());
+            }
         } else if (elevator.enterUpFloor[0] < floorNum[elevator.floorIndex]) {
             elevator.isOpen = false;
             elevator.direction = false;
@@ -220,7 +234,15 @@ function ElevatorRun(elevator, status) {
             elevator.status = elevatorStatus[2];
         } else {
             elevator.isOpen = true;
-            elevator.enterUpFloor.shift();
+            //已經到最頂層，把上樓紀錄推給下樓
+            if (elevator.direction == true) {
+                //條件通過就會清除
+                if (elevator.enterUpFloor.shift() == elevator.maxValue) {
+                    while (elevator.enterUpFloor.length > 0) {
+                        elevator.enterDownFloor.push(elevator.enterUpFloor.pop());
+                    }
+                }
+            }
             floorStatus(true, elevator);
             status.textContent = elevatorStatus[1];
             elevator.status = elevatorStatus[1];
@@ -232,6 +254,9 @@ function ElevatorRun(elevator, status) {
             elevator.floorIndex--;
             status.textContent = elevatorStatus[2] + (floor[elevator.enterDownFloor[0] + 1]).toString();
             elevator.status = elevatorStatus[2];
+            if (elevator.enterDownFloor[0] == elevator.enterDownFloor[1]) {
+                elevator.enterUpFloor.push(elevator.enterDownFloor.shift());
+            }
         } else if (elevator.enterDownFloor[0] > floorNum[elevator.floorIndex]) {
             elevator.isOpen = false;
             elevator.direction = true;
@@ -240,7 +265,15 @@ function ElevatorRun(elevator, status) {
             elevator.status = elevatorStatus[3];
         } else {
             elevator.isOpen = true;
-            elevator.enterDownFloor.shift();
+            //已經到最底層，把下樓紀錄推給上樓
+            if (elevator.direction == false) {
+                //條件通過就會清除
+                if (elevator.enterDownFloor.shift() == elevator.minValue) {
+                    while (elevator.enterDownFloor.length > 0) {
+                        elevator.enterUpFloor.push(elevator.enterDownFloor.pop());
+                    }
+                }
+            }
             floorStatus(true, elevator);
             status.textContent = elevatorStatus[1];
             elevator.status = elevatorStatus[1];
@@ -262,12 +295,14 @@ function Sort(elevator) {
         elevator.enterDownFloor.sort(function (a, b) { //大到小排序
             return b - a
         })
+        elevator.minValue = elevator.enterDownFloor[elevator.enterDownFloor.length-1]
     }
     if (elevator.enterUpFloor.length > 1 && elevator.direction == false || //往下時排往上順序
         elevator.enterUpFloor[elevator.enterUpFloor.length - 1] > elevator.floorIndex - 1) { //輸入樓層 大於 目前樓層
         elevator.enterUpFloor.sort(function (a, b) { //小到大排序
             return a - b
         })
+        elevator.maxValue = elevator.enterUpFloor[elevator.enterUpFloor.length-1]
     }
 }
 //優先度 //true = 電梯1，false = 電梯2
@@ -279,65 +314,10 @@ function Priority(isUp, elevatorGroup) {
     // console.log(distance1);
     // console.log(distance2);
     // console.log(elevatorGroup[1].status[0]);
-    if (elevatorGroup[0].status == elevatorStatus[0] && elevatorGroup[1].status == elevatorStatus[0]) {
-        if (distance1 <= distance2) {
-            return true;
-        } else {
-            return false;
-        }
-    } else if (isUp == true) { //電梯向上
-        //console.log(elevatorGroup[0].enterFloor, elevatorGroup[0].floorIndex);
-        //點選樓層大於等於電梯所在樓層
-        if (elevatorGroup[0].enterFloor >= elevatorGroup[0].floorIndex) {
-            //如果電梯1向上
-            if (elevatorGroup[0].status == elevatorStatus[3] ||
-                elevatorGroup[0].status == elevatorStatus[1] && elevatorGroup[0].enterUpFloor > 0) {
-                return true;
-                //點選樓層小於電梯2位置
-            } else if (elevatorGroup[0].enterFloor < elevatorGroup[1].floorIndex) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            //如果電梯2向上
-            if (elevatorGroup[1].status == elevatorStatus[3] ||
-                elevatorGroup[1].status == elevatorStatus[1] && elevatorGroup[1].enterDownFloor > 0) {
-                return false;
-            } else {
-                if (distance1 <= distance2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-    } else { //電梯向下
-        //console.log(elevatorGroup[0].enterFloor, elevatorGroup[0].floorIndex);
-        //點選樓層小於等於電梯所在樓層
-        if (elevatorGroup[0].enterFloor <= elevatorGroup[0].floorIndex) {
-            //如果電梯1向下
-            if (elevatorGroup[0].status == elevatorStatus[2] ||
-                elevatorGroup[0].status == elevatorStatus[1] && elevatorGroup[0].enterDownFloor > 0) {
-                return true;
-                //點選樓層大於電梯2位置
-            } else if (elevatorGroup[0].enterFloor > elevatorGroup[1].floorIndex) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            //如果電梯2向下
-            if (elevatorGroup[1].status == elevatorStatus[2] ||
-                elevatorGroup[1].status == elevatorStatus[1] && elevatorGroup[1].enterDownFloor > 0) {
-                return false;
-            } else {
-                if (distance1 <= distance2) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
+    //判斷哪個輸入樓層與電梯位置最近
+    if (distance1 <= distance2) {
+        return true;
+    } else {
+        return false;
     }
 }
