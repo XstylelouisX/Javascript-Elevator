@@ -335,12 +335,20 @@ function Priority(isUp, elevatorGroup) {
             } else {
                 return true;
             }
-            //距離判斷
         } else {
-            if (distance1 <= distance2) {
-                return true;
-            } else {
+            //電梯1 下樓中
+            if (elevatorGroup[0].direction == false || elevatorGroup[1].direction == null) {
                 return false;
+                //電梯2 下樓中
+            } else if (elevatorGroup[1].direction == false || elevatorGroup[0].direction == null) {
+                return true;
+                //距離判斷
+            } else {
+                if (distance1 <= distance2) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
         //電梯向下
@@ -361,12 +369,20 @@ function Priority(isUp, elevatorGroup) {
             } else {
                 return true;
             }
-            //距離判斷
         } else {
-            if (distance1 <= distance2) {
-                return true;
-            } else {
+            //電梯1 上樓中
+            if (elevatorGroup[0].direction == true || elevatorGroup[1].direction == null) {
                 return false;
+                //電梯2 上樓中
+            } else if (elevatorGroup[1].direction == true || elevatorGroup[0].direction == null) {
+                return true;
+                //距離判斷
+            } else {
+                if (distance1 <= distance2) {
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
     }
