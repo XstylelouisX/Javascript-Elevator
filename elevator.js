@@ -233,16 +233,14 @@ function ElevatorRun(elevator, status) {
             status.textContent = elevatorStatus[2] + (floor[elevator.enterUpFloor[0] + 1]).toString();
             elevator.status = elevatorStatus[2];
         } else {
-            elevator.isOpen = true;
             //已經到最頂層，把上樓紀錄推給下樓
-            if (elevator.direction == true) {
-                //條件通過就會清除
-                if (elevator.enterUpFloor.shift() == elevator.maxValue) {
-                    while (elevator.enterUpFloor.length > 0) {
-                        elevator.enterDownFloor.push(elevator.enterUpFloor.pop());
-                    }
+            if (elevator.enterUpFloor.shift() == elevator.maxValue) {
+                while (elevator.enterUpFloor.length > 0) {
+                    elevator.enterDownFloor.push(elevator.enterUpFloor.pop());
+                    //console.log("清除上樓");
                 }
             }
+            elevator.isOpen = true;
             floorStatus(true, elevator);
             status.textContent = elevatorStatus[1];
             elevator.status = elevatorStatus[1];
@@ -264,24 +262,24 @@ function ElevatorRun(elevator, status) {
             status.textContent = elevatorStatus[3] + (floor[elevator.enterDownFloor[0] + 1]).toString();
             elevator.status = elevatorStatus[3];
         } else {
-            elevator.isOpen = true;
             //已經到最底層，把下樓紀錄推給上樓
-            if (elevator.direction == false) {
-                //條件通過就會清除
-                if (elevator.enterDownFloor.shift() == elevator.minValue) {
-                    while (elevator.enterDownFloor.length > 0) {
-                        elevator.enterUpFloor.push(elevator.enterDownFloor.pop());
-                    }
+            if (elevator.enterDownFloor.shift() == elevator.minValue) {
+                while (elevator.enterDownFloor.length > 0) {
+                    elevator.enterUpFloor.push(elevator.enterDownFloor.pop());
+                    //console.log("清除下樓");
                 }
             }
+            elevator.isOpen = true;
             floorStatus(true, elevator);
             status.textContent = elevatorStatus[1];
             elevator.status = elevatorStatus[1];
         }
+        //電梯停留中
     } else {
         floorStatus(false, elevator);
         status.textContent = elevatorStatus[0];
         elevator.status = elevatorStatus[0];
+        elevator.direction = null;
     }
 
     if (elevator.isOpen == false) {
@@ -295,29 +293,81 @@ function Sort(elevator) {
         elevator.enterDownFloor.sort(function (a, b) { //大到小排序
             return b - a
         })
-        elevator.minValue = elevator.enterDownFloor[elevator.enterDownFloor.length-1]
+        elevator.minValue = elevator.enterDownFloor[elevator.enterDownFloor.length - 1]
     }
     if (elevator.enterUpFloor.length > 1 && elevator.direction == false || //往下時排往上順序
         elevator.enterUpFloor[elevator.enterUpFloor.length - 1] > elevator.floorIndex - 1) { //輸入樓層 大於 目前樓層
         elevator.enterUpFloor.sort(function (a, b) { //小到大排序
             return a - b
         })
-        elevator.maxValue = elevator.enterUpFloor[elevator.enterUpFloor.length-1]
+        elevator.maxValue = elevator.enterUpFloor[elevator.enterUpFloor.length - 1]
     }
 }
 //優先度 //true = 電梯1，false = 電梯2
 function Priority(isUp, elevatorGroup) {
+    //靜止中距離比較
     var distance1 = Math.abs(elevatorGroup[0].enterFloor) - Math.abs(elevatorGroup[0].floorIndex);
     var distance2 = Math.abs(elevatorGroup[1].enterFloor) - Math.abs(elevatorGroup[1].floorIndex);
     distance1 = Math.abs(distance1);
     distance2 = Math.abs(distance2);
-    // console.log(distance1);
-    // console.log(distance2);
-    // console.log(elevatorGroup[1].status[0]);
-    //判斷哪個輸入樓層與電梯位置最近
-    if (distance1 <= distance2) {
-        return true;
+
+    if (elevatorGroup[0].status == elevatorStatus[0] && elevatorGroup[1].status == elevatorStatus[0]) {
+        if (distance1 <= distance2) {
+            return true;
+        } else {
+            return false;
+        }
+        //電梯向上
+    } else if (isUp == true) {
+        //電梯1 上樓中
+        if (elevatorGroup[0].direction == true) {
+            //輸入樓層 >= 電梯1樓層
+            if (elevatorGroup[0].enterFloor >= elevatorGroup[0].floorIndex) {
+                return true;
+            } else {
+                return false;
+            }
+            //電梯2 上樓中
+        } else if (elevatorGroup[1].direction == true) {
+            //輸入樓層 >= 電梯2樓層
+            if (elevatorGroup[0].enterFloor >= elevatorGroup[1].floorIndex) {
+                return false;
+            } else {
+                return true;
+            }
+            //距離判斷
+        } else {
+            if (distance1 <= distance2) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        //電梯向下
     } else {
-        return false;
+        //電梯1 下樓中
+        if (elevatorGroup[0].direction == false) {
+            //輸入樓層 <= 電梯1樓層
+            if (elevatorGroup[0].enterFloor <= elevatorGroup[0].floorIndex) {
+                return true;
+            } else {
+                return false;
+            }
+            //電梯2 下樓中
+        } else if (elevatorGroup[1].direction == false) {
+            //輸入樓層 <= 電梯2樓層
+            if (elevatorGroup[0].enterFloor <= elevatorGroup[1].floorIndex) {
+                return false;
+            } else {
+                return true;
+            }
+            //距離判斷
+        } else {
+            if (distance1 <= distance2) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 }
