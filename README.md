@@ -1,6 +1,5 @@
 # Javascript-Elevator
 Elevator working code
 
-> Description
-
+Description
 ![image](/image.png)
