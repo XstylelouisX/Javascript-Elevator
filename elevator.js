@@ -113,8 +113,9 @@ function floorButtonOnClick(num, isUp, elevatorGroup) {
         //初始化為空值
         if (num == floor[i] && isUp != null) {
             //輸入樓層(索引值) //判斷優先度用
-            elevatorGroup[0].enterFloor = i;
-            elevatorGroup[1].enterFloor = i;
+            for (var n = 0; elevatorGroup.length > n; n++) {
+                elevatorGroup[n].enterFloor = i;
+            }
             if (isUp && floorUp.style.backgroundColor != "yellow") { //如果上樓
                 recordUpEnter.push(i);
                 Priority(elevatorGroup);
